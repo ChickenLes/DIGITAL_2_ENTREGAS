@@ -2,7 +2,7 @@
  * DISPLAY_7SEG.h
  *
  * Created: 1/24/2026 9:48:56 AM
- *  Author: itzle
+ *  Author: Anthony Boteo
  */ 
 
 

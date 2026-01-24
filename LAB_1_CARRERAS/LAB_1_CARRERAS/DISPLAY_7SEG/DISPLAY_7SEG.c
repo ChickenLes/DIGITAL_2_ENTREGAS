@@ -1,8 +1,7 @@
 /*
  * DISPLAY_7SEG.c
- * Created: 1/24/2026 9:49:03 AM
- * Author: Anthony Boteo
- * Descripción: 
+ * Created: 1/24/2026 9:48:56 AM
+ *  Author: Anthony Boteo
  */ 
 
 #include "DISPLAY_7SEG.h"

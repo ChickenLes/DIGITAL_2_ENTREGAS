@@ -6,7 +6,7 @@
 // PROYECTO: PRELABORATORIO 1
 // HARDWARE: ATMEGA328P
 // CREADO: 01/19/2026
-// ULTIMA MODIFICACION: 04/04/2025
+// ULTIMA MODIFICACION: 01/24/2025
 // DESCRIPCIÓN:
 //-----------------------------------------------
 
@@ -17,7 +17,9 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <stdbool.h> //SI UTILIZAMOS BOOL
-#include "DISPLAY_7SEG/DISPLAY_7SEG.h"
+#include "DISPLAY_7SEG/DISPLAY_7SEG.h" //BIBLIOTECA DISPLAY
+
+
 ///////////////////////VARIABLES_GLOBALES//////////////////////
 volatile uint8_t C1 = 0x00;//VALOR CONTADOR 1
 volatile uint8_t C2 = 0x00;//VALOR CONTADOR 2
@@ -75,61 +77,67 @@ void setup_TIMER0(){
 /////////CONTROL LEDS CONTADORES//////////////
 void MUESTRA_LEDS(){
 	
+	//VARIABLE LOCAL PARA GUARDAR ESTADOS PARA EL PORTB
+	uint8_t NUEVO_PORTB = 0x00; //INICIAMOS EN 0 PARA SIEMPRE REINICIAR EL CONTADOR A 0
 	
-	uint8_t NUEVO_PORTB = 0x00;
+	//CONDICIONES PARA EL JUGADOR 1
+		if (C2 == 2)
+		{
+			NUEVO_PORTB |= (1<<PINB0);
+		}
+		if(C2 == 3){
+			NUEVO_PORTB |= (1<<PINB1);
+		}
+		if(C2 == 4){
+			NUEVO_PORTB |= (1<<PINB2);
+			Play_time = 0;
+		}
 	
-	if (C2 == 2)
-	{
-		NUEVO_PORTB |= (1<<PINB0);
-	}
-	if(C2 == 3){
-		NUEVO_PORTB |= (1<<PINB1);
-	}
-	if(C2 == 4){
-		NUEVO_PORTB |= (1<<PINB2);
-		Play_time = 0;
-	}
-	
-	
-	if(C1 == 1){
-		NUEVO_PORTB |= (1<<PINB3);
-	}
-	
-	if(C1 == 2){
-		NUEVO_PORTB |= (1<<PINB4);
-	}
-	if(C1 == 4){
-		NUEVO_PORTB |= (1<<PINB5);
-		Play_time = 0;
-	}
-	
-	if(C1 == 3){
-		PORTC |= (1<<PINC0);
-	}
-	else{
-		PORTC &= ~(1<<PINC0);
-	}
-	
-	if (C1 == 4 && Play_time == 0)
-	{
-
-		PORTC |= (1<<PINC0);
-		NUEVO_PORTB = 0x78;
-		DISPLAY_VALUE = 2;
-		ESTADO_DISPLAY = 0;
-	}
-	if (C2 == 4 && Play_time ==0)
-	{
-		PORTC &= ~(1<<PINC0);
+	//CONDICIONES PARA EL JUGADOR 2
 		
-		NUEVO_PORTB = 0x07;
-		DISPLAY_VALUE = 1;
-		ESTADO_DISPLAY = 0;
-	}
+		if(C1 == 1){
+			NUEVO_PORTB |= (1<<PINB3);
+		}
+		
+		if(C1 == 2){
+			NUEVO_PORTB |= (1<<PINB4);
+		}
+		if(C1 == 4){
+			NUEVO_PORTB |= (1<<PINB5);
+			Play_time = 0;
+		}
+		
+		//IF CASE PARA ENCENDER EL PINC0 SIN AFECTAR BOTONES EN PORTC
+		if(C1 == 3){
+			PORTC |= (1<<PINC0);
+		}
+		else{
+			PORTC &= ~(1<<PINC0);
+		}
 	
 	
+	//CONDICIONES CUANDO CUALQUIERA DE LOS DOS JUGADORES GANE
+		//SI GANA EL JUGADOR 1
+		if (C2 == 4 && Play_time ==0)
+		{
+			PORTC &= ~(1<<PINC0); //APAGAR PINC0
+			NUEVO_PORTB = 0x07;	//ENCENDER LOS PINES 0000 0111 DE PORTB
+			DISPLAY_VALUE = 1;	//JUGADOR GANADOR(MUESTRA EN EL DISPLAY)
+			ESTADO_DISPLAY = 0;	//ESTADO DEL DISPLAY(BANDERA)
+		}
+		//SI GANA EL JUGADOR 2
+		
+		if (C1 == 4 && Play_time == 0)
+		{
+
+			PORTC |= (1<<PINC0); //ENCENDER PINC0
+			NUEVO_PORTB = 0x78;	//ENCENDER LOS PINES 0111 1000 DE PORTB
+			DISPLAY_VALUE = 2;  //JUGADOR GANADOR
+			ESTADO_DISPLAY = 0; //ESTADO DEL DISPLAY(BANDERA)
+		}
 	
-	PORTB = NUEVO_PORTB;
+	//ACTUALIZAR PORTB EN BASE A LAS CONDICIONES
+		PORTB = NUEVO_PORTB;
 	
 }
 
@@ -189,7 +197,7 @@ ISR(PCINT1_vect){
 			contador_segundos = 0;
 			PORTC &= ~(1<<PINC0);
 			DISPLAY_VALUE = 5;		//VALOR INICIAL DEL DISPLAY
-			PC3ANTI = 200;	//CONTAR 200ms para antirebote
+			PC3ANTI = 200;	//CONTAR 200MS PARA ANTIREBOTE
 	}
 }
 
@@ -198,16 +206,19 @@ ISR(PCINT1_vect){
 ///////////////////////////VECTOR INTERRUPCION TIMER////////////////////
 ISR(TIMER0_COMPA_vect){
 
+	//CONTADORES DE LOS ANTIREBOTE
 	if(PC1ANTI > 0) PC1ANTI--;
 	if(PC2ANTI > 0) PC2ANTI--;
 	if(PC3ANTI > 0) PC3ANTI--;
 
-
+	//MUESTRA EL VALOR ACTUAL Y LO ENVÍA A LA BIBLIOTECA DISPLAY_7SEG
 	mostrar_display(DISPLAY_VALUE);
 	
+	//IF CASE PARA APAGAR EL PIND7 SIN AFECTAR EL DISPLAY
 	if (C2 == 1 || C2 == 4 )
 	{
 		PORTD |= (1<<PIND7);
+		//CONDICION SI C2 = 1 PERO C1 = 4 ENTONCES, APAGAR PIND7.
 		if(C1 == 4){
 			PORTD &= ~(1<<PIND7);
 		}
@@ -217,36 +228,36 @@ ISR(TIMER0_COMPA_vect){
 		PORTD &= ~(1<<PIND7);
 	}
 
+	//SWITCH CASE PARA LOS ESTADOS DEL DISPLAY
 
 	switch(ESTADO_DISPLAY){
 
+		//CARRERA NO INICIADA
+		case 0:
+		break;
+		
+		//CARRERA INICIADA
+		case 1:	
+		if (contador_segundos >= 1000){
+			contador_segundos = 0;
+			if (DISPLAY_VALUE > 0)
+			{
+				DISPLAY_VALUE--;
 
-	//CARRERA NO INICIADA
-	case 0:
-	
-	break;
-	//CARRERA INICIADA
-	case 1:	
-	if (contador_segundos >= 1000){
-		contador_segundos = 0;
-		if (DISPLAY_VALUE > 0)
-		{
-			DISPLAY_VALUE--;
-
-		if (DISPLAY_VALUE == 0)
-		{
-			Play_time = 1;
+			if (DISPLAY_VALUE == 0)
+			{
+				Play_time = 1;
+			}
+			}
 		}
-	}
-	}
 
-	else
-	{
-		contador_segundos++;
-	}
+		else
+		{
+			contador_segundos++;
+		}
 
 
-break;
-}
+	break;
+	}
 
 }

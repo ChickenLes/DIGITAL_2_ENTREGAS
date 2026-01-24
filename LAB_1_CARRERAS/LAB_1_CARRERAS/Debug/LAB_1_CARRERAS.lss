@@ -224,12 +224,12 @@ void setup_TIMER0(){
  11a:	08 95       	ret
 
 0000011c <MUESTRA_LEDS>:
-void MUESTRA_LEDS(){
 	
+	//VARIABLE LOCAL PARA GUARDAR ESTADOS PARA EL PORTB
+	uint8_t NUEVO_PORTB = 0x00; //INICIAMOS EN 0 PARA SIEMPRE REINICIAR EL CONTADOR A 0
 	
-	uint8_t NUEVO_PORTB = 0x00;
-	
-	if (C2 == 2)
+	//CONDICIONES PARA EL JUGADOR 1
+		if (C2 == 2)
  11c:	80 91 19 01 	lds	r24, 0x0119	; 0x800119 <C2>
  120:	82 30       	cpi	r24, 0x02	; 2
  122:	11 f0       	breq	.+4      	; 0x128 <MUESTRA_LEDS+0xc>
@@ -237,137 +237,144 @@ void MUESTRA_LEDS(){
 /////////CONTROL LEDS CONTADORES//////////////
 void MUESTRA_LEDS(){
 	
-	
-	uint8_t NUEVO_PORTB = 0x00;
+	//VARIABLE LOCAL PARA GUARDAR ESTADOS PARA EL PORTB
+	uint8_t NUEVO_PORTB = 0x00; //INICIAMOS EN 0 PARA SIEMPRE REINICIAR EL CONTADOR A 0
  124:	80 e0       	ldi	r24, 0x00	; 0
  126:	01 c0       	rjmp	.+2      	; 0x12a <MUESTRA_LEDS+0xe>
 	
-	if (C2 == 2)
-	{
-		NUEVO_PORTB |= (1<<PINB0);
+	//CONDICIONES PARA EL JUGADOR 1
+		if (C2 == 2)
+		{
+			NUEVO_PORTB |= (1<<PINB0);
  128:	81 e0       	ldi	r24, 0x01	; 1
-	}
-	if(C2 == 3){
+		}
+		if(C2 == 3){
  12a:	90 91 19 01 	lds	r25, 0x0119	; 0x800119 <C2>
  12e:	93 30       	cpi	r25, 0x03	; 3
  130:	09 f4       	brne	.+2      	; 0x134 <MUESTRA_LEDS+0x18>
-		NUEVO_PORTB |= (1<<PINB1);
+			NUEVO_PORTB |= (1<<PINB1);
  132:	82 60       	ori	r24, 0x02	; 2
-	}
-	if(C2 == 4){
+		}
+		if(C2 == 4){
  134:	90 91 19 01 	lds	r25, 0x0119	; 0x800119 <C2>
  138:	94 30       	cpi	r25, 0x04	; 4
  13a:	19 f4       	brne	.+6      	; 0x142 <MUESTRA_LEDS+0x26>
-		NUEVO_PORTB |= (1<<PINB2);
+			NUEVO_PORTB |= (1<<PINB2);
  13c:	84 60       	ori	r24, 0x04	; 4
-		Play_time = 0;
+			Play_time = 0;
  13e:	10 92 18 01 	sts	0x0118, r1	; 0x800118 <Play_time>
-	}
+		}
 	
-	
-	if(C1 == 1){
+	//CONDICIONES PARA EL JUGADOR 2
+		
+		if(C1 == 1){
  142:	90 91 1a 01 	lds	r25, 0x011A	; 0x80011a <C1>
  146:	91 30       	cpi	r25, 0x01	; 1
  148:	09 f4       	brne	.+2      	; 0x14c <MUESTRA_LEDS+0x30>
-		NUEVO_PORTB |= (1<<PINB3);
+			NUEVO_PORTB |= (1<<PINB3);
  14a:	88 60       	ori	r24, 0x08	; 8
-	}
-	
-	if(C1 == 2){
+		}
+		
+		if(C1 == 2){
  14c:	90 91 1a 01 	lds	r25, 0x011A	; 0x80011a <C1>
  150:	92 30       	cpi	r25, 0x02	; 2
  152:	09 f4       	brne	.+2      	; 0x156 <MUESTRA_LEDS+0x3a>
-		NUEVO_PORTB |= (1<<PINB4);
+			NUEVO_PORTB |= (1<<PINB4);
  154:	80 61       	ori	r24, 0x10	; 16
-	}
-	if(C1 == 4){
+		}
+		if(C1 == 4){
  156:	90 91 1a 01 	lds	r25, 0x011A	; 0x80011a <C1>
  15a:	94 30       	cpi	r25, 0x04	; 4
  15c:	19 f4       	brne	.+6      	; 0x164 <MUESTRA_LEDS+0x48>
-		NUEVO_PORTB |= (1<<PINB5);
+			NUEVO_PORTB |= (1<<PINB5);
  15e:	80 62       	ori	r24, 0x20	; 32
-		Play_time = 0;
+			Play_time = 0;
  160:	10 92 18 01 	sts	0x0118, r1	; 0x800118 <Play_time>
-	}
-	
-	if(C1 == 3){
+		}
+		
+		//IF CASE PARA ENCENDER EL PINC0 SIN AFECTAR BOTONES EN PORTC
+		if(C1 == 3){
  164:	90 91 1a 01 	lds	r25, 0x011A	; 0x80011a <C1>
  168:	93 30       	cpi	r25, 0x03	; 3
  16a:	21 f4       	brne	.+8      	; 0x174 <MUESTRA_LEDS+0x58>
-		PORTC |= (1<<PINC0);
+			PORTC |= (1<<PINC0);
  16c:	98 b1       	in	r25, 0x08	; 8
  16e:	91 60       	ori	r25, 0x01	; 1
  170:	98 b9       	out	0x08, r25	; 8
  172:	03 c0       	rjmp	.+6      	; 0x17a <MUESTRA_LEDS+0x5e>
-	}
-	else{
-		PORTC &= ~(1<<PINC0);
+		}
+		else{
+			PORTC &= ~(1<<PINC0);
  174:	98 b1       	in	r25, 0x08	; 8
  176:	9e 7f       	andi	r25, 0xFE	; 254
  178:	98 b9       	out	0x08, r25	; 8
-	}
+		}
 	
-	if (C1 == 4 && Play_time == 0)
- 17a:	90 91 1a 01 	lds	r25, 0x011A	; 0x80011a <C1>
+	
+	//CONDICIONES CUANDO CUALQUIERA DE LOS DOS JUGADORES GANE
+		//SI GANA EL JUGADOR 1
+		if (C2 == 4 && Play_time ==0)
+ 17a:	90 91 19 01 	lds	r25, 0x0119	; 0x800119 <C2>
  17e:	94 30       	cpi	r25, 0x04	; 4
  180:	69 f4       	brne	.+26     	; 0x19c <MUESTRA_LEDS+0x80>
  182:	90 91 18 01 	lds	r25, 0x0118	; 0x800118 <Play_time>
  186:	91 11       	cpse	r25, r1
  188:	09 c0       	rjmp	.+18     	; 0x19c <MUESTRA_LEDS+0x80>
-	{
-
-		PORTC |= (1<<PINC0);
+		{
+			PORTC &= ~(1<<PINC0); //APAGAR PINC0
  18a:	88 b1       	in	r24, 0x08	; 8
- 18c:	81 60       	ori	r24, 0x01	; 1
+ 18c:	8e 7f       	andi	r24, 0xFE	; 254
  18e:	88 b9       	out	0x08, r24	; 8
-		NUEVO_PORTB = 0x78;
-		DISPLAY_VALUE = 2;
- 190:	82 e0       	ldi	r24, 0x02	; 2
+			NUEVO_PORTB = 0x07;	//ENCENDER LOS PINES 0000 0111 DE PORTB
+			DISPLAY_VALUE = 1;	//JUGADOR GANADOR(MUESTRA EN EL DISPLAY)
+ 190:	81 e0       	ldi	r24, 0x01	; 1
  192:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
-		ESTADO_DISPLAY = 0;
+			ESTADO_DISPLAY = 0;	//ESTADO DEL DISPLAY(BANDERA)
  196:	10 92 14 01 	sts	0x0114, r1	; 0x800114 <ESTADO_DISPLAY>
-	
-	if (C1 == 4 && Play_time == 0)
-	{
-
-		PORTC |= (1<<PINC0);
-		NUEVO_PORTB = 0x78;
- 19a:	88 e7       	ldi	r24, 0x78	; 120
-		DISPLAY_VALUE = 2;
-		ESTADO_DISPLAY = 0;
-	}
-	if (C2 == 4 && Play_time ==0)
- 19c:	90 91 19 01 	lds	r25, 0x0119	; 0x800119 <C2>
+	//CONDICIONES CUANDO CUALQUIERA DE LOS DOS JUGADORES GANE
+		//SI GANA EL JUGADOR 1
+		if (C2 == 4 && Play_time ==0)
+		{
+			PORTC &= ~(1<<PINC0); //APAGAR PINC0
+			NUEVO_PORTB = 0x07;	//ENCENDER LOS PINES 0000 0111 DE PORTB
+ 19a:	87 e0       	ldi	r24, 0x07	; 7
+			DISPLAY_VALUE = 1;	//JUGADOR GANADOR(MUESTRA EN EL DISPLAY)
+			ESTADO_DISPLAY = 0;	//ESTADO DEL DISPLAY(BANDERA)
+		}
+		//SI GANA EL JUGADOR 2
+		
+		if (C1 == 4 && Play_time == 0)
+ 19c:	90 91 1a 01 	lds	r25, 0x011A	; 0x80011a <C1>
  1a0:	94 30       	cpi	r25, 0x04	; 4
  1a2:	69 f4       	brne	.+26     	; 0x1be <MUESTRA_LEDS+0xa2>
  1a4:	90 91 18 01 	lds	r25, 0x0118	; 0x800118 <Play_time>
  1a8:	91 11       	cpse	r25, r1
  1aa:	09 c0       	rjmp	.+18     	; 0x1be <MUESTRA_LEDS+0xa2>
-	{
-		PORTC &= ~(1<<PINC0);
+		{
+
+			PORTC |= (1<<PINC0); //ENCENDER PINC0
  1ac:	88 b1       	in	r24, 0x08	; 8
- 1ae:	8e 7f       	andi	r24, 0xFE	; 254
+ 1ae:	81 60       	ori	r24, 0x01	; 1
  1b0:	88 b9       	out	0x08, r24	; 8
-		
-		NUEVO_PORTB = 0x07;
-		DISPLAY_VALUE = 1;
- 1b2:	81 e0       	ldi	r24, 0x01	; 1
+			NUEVO_PORTB = 0x78;	//ENCENDER LOS PINES 0111 1000 DE PORTB
+			DISPLAY_VALUE = 2;  //JUGADOR GANADOR
+ 1b2:	82 e0       	ldi	r24, 0x02	; 2
  1b4:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
-		ESTADO_DISPLAY = 0;
+			ESTADO_DISPLAY = 0; //ESTADO DEL DISPLAY(BANDERA)
  1b8:	10 92 14 01 	sts	0x0114, r1	; 0x800114 <ESTADO_DISPLAY>
-	}
-	if (C2 == 4 && Play_time ==0)
-	{
-		PORTC &= ~(1<<PINC0);
 		
-		NUEVO_PORTB = 0x07;
- 1bc:	87 e0       	ldi	r24, 0x07	; 7
-		ESTADO_DISPLAY = 0;
-	}
+		if (C1 == 4 && Play_time == 0)
+		{
+
+			PORTC |= (1<<PINC0); //ENCENDER PINC0
+			NUEVO_PORTB = 0x78;	//ENCENDER LOS PINES 0111 1000 DE PORTB
+ 1bc:	88 e7       	ldi	r24, 0x78	; 120
+			DISPLAY_VALUE = 2;  //JUGADOR GANADOR
+			ESTADO_DISPLAY = 0; //ESTADO DEL DISPLAY(BANDERA)
+		}
 	
-	
-	
-	PORTB = NUEVO_PORTB;
+	//ACTUALIZAR PORTB EN BASE A LAS CONDICIONES
+		PORTB = NUEVO_PORTB;
  1be:	85 b9       	out	0x05, r24	; 5
  1c0:	08 95       	ret
 
@@ -502,7 +509,7 @@ ISR(PCINT1_vect){
 			DISPLAY_VALUE = 5;		//VALOR INICIAL DEL DISPLAY
  286:	85 e0       	ldi	r24, 0x05	; 5
  288:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
-			PC3ANTI = 200;	//CONTAR 200ms para antirebote
+			PC3ANTI = 200;	//CONTAR 200MS PARA ANTIREBOTE
  28c:	88 ec       	ldi	r24, 0xC8	; 200
  28e:	80 93 15 01 	sts	0x0115, r24	; 0x800115 <PC3ANTI>
 	}
@@ -549,6 +556,7 @@ ISR(TIMER0_COMPA_vect){
  2d2:	ef 93       	push	r30
  2d4:	ff 93       	push	r31
 
+	//CONTADORES DE LOS ANTIREBOTE
 	if(PC1ANTI > 0) PC1ANTI--;
  2d6:	80 91 17 01 	lds	r24, 0x0117	; 0x800117 <PC1ANTI>
  2da:	88 23       	and	r24, r24
@@ -571,11 +579,12 @@ ISR(TIMER0_COMPA_vect){
  306:	81 50       	subi	r24, 0x01	; 1
  308:	80 93 15 01 	sts	0x0115, r24	; 0x800115 <PC3ANTI>
 
-
+	//MUESTRA EL VALOR ACTUAL Y LO ENVÍA A LA BIBLIOTECA DISPLAY_7SEG
 	mostrar_display(DISPLAY_VALUE);
  30c:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
  310:	0e 94 57 00 	call	0xae	; 0xae <mostrar_display>
 	
+	//IF CASE PARA APAGAR EL PIND7 SIN AFECTAR EL DISPLAY
 	if (C2 == 1 || C2 == 4 )
  314:	80 91 19 01 	lds	r24, 0x0119	; 0x800119 <C2>
  318:	81 30       	cpi	r24, 0x01	; 1
@@ -607,50 +616,51 @@ ISR(TIMER0_COMPA_vect){
  33e:	8b b9       	out	0x0b, r24	; 11
 	}
 
+	//SWITCH CASE PARA LOS ESTADOS DEL DISPLAY
 
 	switch(ESTADO_DISPLAY){
  340:	80 91 14 01 	lds	r24, 0x0114	; 0x800114 <ESTADO_DISPLAY>
  344:	81 30       	cpi	r24, 0x01	; 1
  346:	29 f5       	brne	.+74     	; 0x392 <__vector_14+0xde>
-	case 0:
-	
-	break;
-	//CARRERA INICIADA
-	case 1:	
-	if (contador_segundos >= 1000){
+		case 0:
+		break;
+		
+		//CARRERA INICIADA
+		case 1:	
+		if (contador_segundos >= 1000){
  348:	80 91 12 01 	lds	r24, 0x0112	; 0x800112 <__data_end>
  34c:	90 91 13 01 	lds	r25, 0x0113	; 0x800113 <__data_end+0x1>
  350:	88 3e       	cpi	r24, 0xE8	; 232
  352:	93 40       	sbci	r25, 0x03	; 3
  354:	a8 f0       	brcs	.+42     	; 0x380 <__vector_14+0xcc>
-		contador_segundos = 0;
+			contador_segundos = 0;
  356:	10 92 13 01 	sts	0x0113, r1	; 0x800113 <__data_end+0x1>
  35a:	10 92 12 01 	sts	0x0112, r1	; 0x800112 <__data_end>
-		if (DISPLAY_VALUE > 0)
+			if (DISPLAY_VALUE > 0)
  35e:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
  362:	88 23       	and	r24, r24
  364:	b1 f0       	breq	.+44     	; 0x392 <__vector_14+0xde>
-		{
-			DISPLAY_VALUE--;
+			{
+				DISPLAY_VALUE--;
  366:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
  36a:	81 50       	subi	r24, 0x01	; 1
  36c:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
 
-		if (DISPLAY_VALUE == 0)
+			if (DISPLAY_VALUE == 0)
  370:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
  374:	81 11       	cpse	r24, r1
  376:	0d c0       	rjmp	.+26     	; 0x392 <__vector_14+0xde>
-		{
-			Play_time = 1;
+			{
+				Play_time = 1;
  378:	81 e0       	ldi	r24, 0x01	; 1
  37a:	80 93 18 01 	sts	0x0118, r24	; 0x800118 <Play_time>
  37e:	09 c0       	rjmp	.+18     	; 0x392 <__vector_14+0xde>
-	}
-	}
+			}
+		}
 
-	else
-	{
-		contador_segundos++;
+		else
+		{
+			contador_segundos++;
  380:	80 91 12 01 	lds	r24, 0x0112	; 0x800112 <__data_end>
  384:	90 91 13 01 	lds	r25, 0x0113	; 0x800113 <__data_end+0x1>
  388:	01 96       	adiw	r24, 0x01	; 1
@@ -658,8 +668,8 @@ ISR(TIMER0_COMPA_vect){
  38e:	80 93 12 01 	sts	0x0112, r24	; 0x800112 <__data_end>
 
 
-break;
-}
+	break;
+	}
 
  392:	ff 91       	pop	r31
  394:	ef 91       	pop	r30
