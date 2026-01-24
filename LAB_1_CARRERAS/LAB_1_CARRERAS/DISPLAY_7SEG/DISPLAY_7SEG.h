@@ -1,0 +1,32 @@
+/*
+ * DISPLAY_7SEG.h
+ *
+ * Created: 1/24/2026 9:48:56 AM
+ *  Author: itzle
+ */ 
+
+
+#ifndef DISPLAY_7SEG_H_
+#define DISPLAY_7SEG_H_
+
+#include <avr/io.h>
+#include <stdint.h>
+
+//PUERTO DEL DISPLAY
+#define DISPLAY_PORT	PORTD
+#define DISPLAY_DDR		DDRD
+
+//UTILIZAR MASCARA SI NO SE UTILIZA TODO EL PUERTO D
+//0x7F 0111 1111 - DE PD0 - PD6 OUTPUTS DEL DISPLAY
+//0xFF 1111 1111 - TODO EL PORTD ES OUTPUT DEL DISPLAY(UTILIZANDO PD)
+#define DISPLAY_MASK	 0x7F
+
+//FUNCION PARA INICIAR CONFIGURACION DEL DISPLAY
+void iniciar_display(void);
+
+//FUNCION PARA MOSTRAR VALORES DEL DISPLAY EN BASE A LA TABLA
+void mostrar_display(uint8_t numero);
+
+
+
+#endif /* DISPLAY_7SEG_H_ */
