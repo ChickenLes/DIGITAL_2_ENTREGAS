@@ -7,7 +7,7 @@
 
 #include "LCD_LIB.h"
 
-void LCD_PORT(void){
+void LCD_PORT(char DATO){
 	
 	//PORTD D2 - D7
 	uint8_t PORTD_TEMP = (LCD_PORTD & ~PORTD_MASK) | (DATO & PORTD_MASK);
@@ -15,7 +15,7 @@ void LCD_PORT(void){
 	
 	//PORTB D0 - D1
 	uint8_t PORTB_TEMP = (LCD_PORTB & ~PORTB_MASK) | (DATO & PORTB_MASK);
-	LCD_PORTB = PORTB_TEMP
+	LCD_PORTB = PORTB_TEMP;
 	
 	
 	
@@ -39,12 +39,12 @@ void INICIAR_LCD(void){
 	
 	//ESTADO INICIAL
 	LCD_CONTROL &= ~((1<<PIN_RS)|(1<<PIN_WR)|(1<<PIN_ENABLE));
-	_delay_ms(20);
+	_delay_ms(50);
 	
 	COMANDO_LCD(0x38); //MODO 8 bits (0011 1000) 
 	_delay_ms(5);
 	COMANDO_LCD(0x38); //MODO 8 bits (0011 1000)
-	_delay_ms(100);
+	_delay_ms(200);
 	
 	COMANDO_LCD(0x0C); //DISPLAY ON, CURSOR OFF, BLINK OFF
 	COMANDO_LCD(0x01); //CLEAN
@@ -57,7 +57,7 @@ void COMANDO_LCD(uint8_t COMANDO){
 	RS_0();	//RS = 0
 	WR_WRITE(); //WR = 0
 	LCD_PORT(COMANDO);	//MANDAR LOS COMANDOS A LCD_PORT
-	ENABLE_1(); //PERMITE MANDAR LOS DATOS
+	LCD_LECTURA();
 	
 }
 
@@ -66,7 +66,7 @@ void LCD_WRITE_CHAR(char DATO){
 	RS_1();	//RS = 1
 	WR_WRITE(); //WR = 0
 	LCD_PORT(DATO); //MANDAR DATOS A LCD_PORT
-	ENABLE_1(); //PERMITE MANDAR LOS DATOS
+	LCD_LECTURA();
 	
 	
 }
@@ -74,7 +74,7 @@ void LCD_WRITE_CHAR(char DATO){
 void LCD_WRITE_STRING(char *TEXTO){
 	
 	while(*TEXTO){
-		LCD_WRITE_STRING(*TEXTO);
+		LCD_WRITE_CHAR(*TEXTO);
 			TEXTO++;
 
 	}
@@ -94,7 +94,7 @@ void CURSOR(uint8_t FILA, uint8_t COLUMNA){
 		LOCATION = 0xC0 + COLUMNA;
 		
 	}
-	LCD_CONTROL(LOCATION);
+	COMANDO_LCD(LOCATION);
 	
 	
 }

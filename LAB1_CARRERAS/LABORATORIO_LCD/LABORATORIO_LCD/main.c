@@ -5,21 +5,24 @@
  * Author : itzle
  */ 
 
+#define F_CPU 16000000UL
 #include <avr/io.h>
+#include <util/delay.h>
 #include "LCD/LCD_LIB.h"
 #include "ADC/ADC_LIB.h"
 
 int main(void)
 {
     INICIAR_LCD();
-	ADC_CONF();
 	
-	char buffer[10];
-	uint16_t VALOR_ADC;
+	CURSOR(0, 0);
+	LCD_WRITE_STRING("HOLA MUNDO!");
+	
+	CURSOR(1, 2);
+	LCD_WRITE_STRING(":D");
 	
     while (1) 
-    {
-		
+    {	
 		
     }
 }
