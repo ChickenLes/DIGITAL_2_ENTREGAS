@@ -6,7 +6,7 @@
  */ 
 
 #include <avr/io.h>
-
+#include "LCD/LCD_LIB.h"
 
 int main(void)
 {

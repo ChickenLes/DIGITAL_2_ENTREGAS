@@ -9,17 +9,24 @@
 
 void LCD_PORT(void){
 	
-	uint8_t PORTD_TEMP = ()
+	//PORTD D2 - D7
+	uint8_t PORTD_TEMP = (LCD_PORTD & ~PORTD_MASK) | (DATO & PORTD_MASK);
+	LCD_PORTD = PORTD_TEMP;
+	
+	//PORTB D0 - D1
+	uint8_t PORTB_TEMP = (LCD_PORTB & ~PORTB_MASK) | (DATO & PORTB_MASK);
+	LCD_PORTB = PORTB_TEMP
 	
 	
 	
 }
+
+//OBTENIDO DE CHATGPT
 void LCD_LECTURA(void){
-	
-	LCD_CONTROL |= (1<<PIN_ENABLE); //ENABLE = 1
-	
-	
-	
+	ENABLE_1();
+	_delay_us(1);
+	ENABLE_0();
+	_delay_us(50);
 }
 
 void INICIAR_LCD(void){
@@ -47,9 +54,48 @@ void INICIAR_LCD(void){
 
 void COMANDO_LCD(uint8_t COMANDO){
 	
-	LCD_CONTROL |= (1<<PIN_RS); //ENCENDEMOS EL RST
-	LCD_CONTROL &= (1<<PIN_WR); //APAGAMOS ESCRITURA Y LECTURA
+	RS_0();	//RS = 0
+	WR_WRITE(); //WR = 0
+	LCD_PORT(COMANDO);	//MANDAR LOS COMANDOS A LCD_PORT
+	ENABLE_1(); //PERMITE MANDAR LOS DATOS
 	
+}
+
+void LCD_WRITE_CHAR(char DATO){
+	
+	RS_1();	//RS = 1
+	WR_WRITE(); //WR = 0
+	LCD_PORT(DATO); //MANDAR DATOS A LCD_PORT
+	ENABLE_1(); //PERMITE MANDAR LOS DATOS
 	
 	
 }
+
+void LCD_WRITE_STRING(char *TEXTO){
+	
+	while(*TEXTO){
+		LCD_WRITE_STRING(*TEXTO);
+			TEXTO++;
+
+	}
+		
+}
+
+void CURSOR(uint8_t FILA, uint8_t COLUMNA){
+	
+	uint8_t LOCATION = 0;
+	if(FILA == 0){
+		LOCATION = 0x80 + COLUMNA;
+		
+	}
+	
+	else
+	{
+		LOCATION = 0xC0 + COLUMNA;
+		
+	}
+	LCD_CONTROL(LOCATION);
+	
+	
+}
+
