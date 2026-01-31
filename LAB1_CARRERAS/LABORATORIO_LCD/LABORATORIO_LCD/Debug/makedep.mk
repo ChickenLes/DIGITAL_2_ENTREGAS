@@ -8,3 +8,5 @@ LCD\LCD_LIB.c
 
 main.c
 
+UART_LIB\UART_LIB.c
+

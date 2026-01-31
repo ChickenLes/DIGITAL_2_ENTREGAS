@@ -39,7 +39,7 @@ void INICIAR_LCD(void){
 	
 	//ESTADO INICIAL
 	LCD_CONTROL &= ~((1<<PIN_RS)|(1<<PIN_WR)|(1<<PIN_ENABLE));
-	_delay_ms(50);
+	_delay_ms(200);
 	
 	COMANDO_LCD(0x38); //MODO 8 bits (0011 1000) 
 	_delay_ms(5);
