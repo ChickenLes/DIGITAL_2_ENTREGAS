@@ -120,6 +120,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ADC\ADC_LIB.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ADC\ADC_LIB.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -129,8 +135,16 @@
     <Compile Include="SPI_LIB\SPI_LIB.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="UART\UART_LIB.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="UART\UART_LIB.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ADC" />
+    <Folder Include="UART" />
     <Folder Include="SPI_LIB" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />

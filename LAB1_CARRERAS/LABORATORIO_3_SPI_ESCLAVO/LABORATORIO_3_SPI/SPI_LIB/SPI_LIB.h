@@ -14,7 +14,7 @@
 
 #define	SPI_DDR		DDRB
 #define SPI_PORT	PORTB
-#define SPI_SS		DDB2	//PIN DEL MAESTRO
+#define SPI_SS		DDB2	//PIN DEL ESCLAVO
 #define SPI_MOSI	DDB3
 #define SPI_MISO	DDB4
 #define SPI_SCK		DDB5
@@ -61,6 +61,6 @@ typedef enum{
 void SPI_INIT(SPI_TYPE, SPI_ORDER, CLOCK_POLARITY, CLOCK_PHASE );
 void SPI_WRITE(uint8_t dato);
 uint8_t SPI_READ(void);
-uint8_t SPI_RECEIVE_CHECK(void);
+
 
 #endif /* SPI_LIB_H_ */

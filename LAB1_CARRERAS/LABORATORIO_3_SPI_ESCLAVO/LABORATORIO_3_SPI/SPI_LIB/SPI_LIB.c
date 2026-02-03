@@ -7,6 +7,7 @@
 
 #include "SPI_LIB.h"
 
+//BUFFER PARA GUARDAR EL DATO DE LA INTERRUPCIÓN
 
 
 
@@ -87,15 +88,16 @@ void SPI_INIT(SPI_TYPE type, SPI_ORDER dataOrder, CLOCK_POLARITY clockPolarity, 
 
 void SPI_WRITE(uint8_t dato){
 	SPDR = dato;
-	while (!(SPSR &(1<<SPIF)));
+	while (!(SPDR &(1<<SPIF)));
 }
 
 uint8_t SPI_READ(void){
 	
-	 while (!(SPSR &(1<<SPIF)));
-	 return SPDR;
+	while (!(SPDR &(1<<SPIF)));
+	return SPDR;
 	
 }
+
 
 
 
