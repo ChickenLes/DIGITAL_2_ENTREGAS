@@ -1,9 +1,17 @@
-/*
- * LABORATORIO_3_SPI.c
- *
- * Created: 2/3/2026 10:33:04 AM
- * Author : itzle
- */ 
+//-----------------------------------------------
+// UNIVERSIDAD DEL VALLE DE GUATEMALA
+// ELECTRÓNICA DIGITAL 2 - SECCIÓN - 20 -
+// LAB_SPI_MASTER.c
+// AUTOR1: ANTHONY ALEJANDRO BOTEO LÓPEZ
+//AUTOR1: ANTHONY ALEJANDRO BOTEO LÓPEZ
+// PROYECTO: LABORATORIO SPI
+// HARDWARE: ATMEGA328P
+// CREADO: 02/02/2026
+// ULTIMA MODIFICACION: 02/03/2025
+// DESCRIPCIÓN: el siguiente código tiene como objetivo el utillizar un arduino nano como esclavo para enviar datos de dos potenciometroes utilizando el ADC de los pines PC0 y PC1 
+//y visualizar los valores de PC1 en los leds de PD2 - PD5 del esclavo y de PC0 en los valores de los leds de PD2 - PD5 del maestro. 
+//la terminal UART de los valores del esclavo.
+//-----------------------------------------------
 
 
 #define F_CPU 16000000UL
@@ -48,6 +56,10 @@ ISR(SPI_STC_vect){
 	if(ORDEN == '1')
 	{
 	SPDR = POTE1;
+	}
+	else if (ORDEN == '2')
+	{
+		SPDR = POTE2;
 	}
 	else
 	{
