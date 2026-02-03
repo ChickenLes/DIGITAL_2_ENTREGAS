@@ -16,11 +16,17 @@
 
 
 volatile uint8_t POTE1 = 0;
+uint8_t POTE2 = 0;
 
+void setup(){
+	DDRD = 0xFF;
+	PORTD = 0x00;
+}
 
 
 int main(void)
 {
+	setup();
 	ADC_CONF();
 	SPI_INIT(SPI_SLAVE, DATA_MSB, CLOCK_LOW, FIRST_EDGE);
 	sei();
@@ -28,7 +34,10 @@ int main(void)
     /* Replace with your application code */
     while (1) 
     {
-		POTE1 = ADC_READ(0)/4;
+		POTE1 = ADC_READ(1)/4;
+		POTE2 = ADC_READ(2)/4;
+		
+		PORTD =(POTE2>>4)<<2;
     }
 }
 
