@@ -53,11 +53,11 @@ ISR(SPI_STC_vect){
 	
 	uint8_t ORDEN = SPDR;
 	
-	if(ORDEN == '1')
+	if(ORDEN == 1)
 	{
 	SPDR = POTE1;
 	}
-	else if (ORDEN == '2')
+	else if (ORDEN == 2)
 	{
 		SPDR = POTE2;
 	}

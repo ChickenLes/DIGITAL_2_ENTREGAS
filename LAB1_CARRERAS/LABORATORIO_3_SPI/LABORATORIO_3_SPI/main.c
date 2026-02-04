@@ -12,16 +12,11 @@
 //la terminal UART de los valores del esclavo.
 //-----------------------------------------------
 
-//-----------------------------------------------
-// UNIVERSIDAD DEL VALLE DE GUATEMALA
-// LAB_SPI_MASTER.c
-//-----------------------------------------------
-
 #define F_CPU 16000000UL
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#include <stdlib.h> // Necesario para atoi()
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
