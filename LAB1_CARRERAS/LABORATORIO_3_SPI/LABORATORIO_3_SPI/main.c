@@ -12,93 +12,64 @@
 //la terminal UART de los valores del esclavo.
 //-----------------------------------------------
 
+//-----------------------------------------------
+// UNIVERSIDAD DEL VALLE DE GUATEMALA
+// LAB_SPI_MASTER.c
+//-----------------------------------------------
+
 #define F_CPU 16000000UL
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <stdlib.h> // Necesario para atoi()
 #include <stdio.h>
+#include <string.h>
+
 #include "SPI_LIB/SPI_LIB.h"
-#include "ADC/ADC_LIB.h"
 #include "UART/UART_LIB.h"
 
-#define SS_LOW() PORTB &= ~(1<<DDB2);
-#define SS_HIGH() PORTB |= (1<<DDB2);
+#define SS_LOW()  PORTB &= ~(1 << DDB2);
+#define SS_HIGH() PORTB |= (1 << DDB2);
 
-uint16_t dato_recibido1 = 0;
-uint16_t dato_recibido2 = 0;
-
-
-char buffer_rx[20];
-char buffer[40];
-
-void setup(){
-	DDRD = 0xFF;
-	PORTD = 0x00;
-}
-
-
-int main(void)	
+int main(void)
 {
-	setup();
+	char buffer_recepcion[20];
+	char buffer_salida[50];
+	uint8_t valor_spi = 0;
+	
 	UART_CONF();
-	sei();
 	SPI_INIT(SPI_MASTER_DIV16, DATA_MSB, CLOCK_LOW, FIRST_EDGE);
+	sei();
 	
-	
-	
+	UART_PrintString("1 o 2");
 
-	
-	UART_PrintString("Leyendo del esclavo");
-	UART_PrintString("1 y 2 para lectura");
-	
-	
-	
-    /* Replace with your application code */
-    while (1) 
-    {
-		
-		
-		
-		SS_LOW();
-		SPI_WRITE('1');
-		_delay_us(50);
-		
-		SPI_WRITE(0x00);
-		dato_recibido1 = SPDR;
-		SS_HIGH();
-	
-		_delay_ms(2);
-	
-		SS_LOW();
-		SPI_WRITE('2');
-		_delay_us(50);
-		
-		SPI_WRITE(0x00);
-		dato_recibido2 = SPDR;
-		SS_HIGH();
-	
-				
-	
-		_delay_ms(100);
-		
-    }
-}
-
-void ENVIAR_UART(uint8_t dato_recibido1, uint8_t dato_recibido2){
-	if (COMANDO_NUEVO())
+	while (1)
 	{
-		RECIBIR_COMANDO(buffer_rx);
-		if(buffer_rx[0] == 'S' )
+		if (COMANDO_NUEVO())
 		{
-			printf(buffer, "%d", dato_recibido1);
-			UART_PrintString(buffer);
+			RECIBIR_COMANDO(buffer_recepcion);
+			
+			int numero = atoi(buffer_recepcion);
+
+			if (numero == 1 || numero == 2)
+			{
+				SS_LOW();
+				SPI_WRITE(numero);
+				_delay_us(50);
+				SPI_WRITE(0x00);
+				valor_spi = SPDR;
+				SS_HIGH();
+				uint32_t LECTURA_ADC = ((uint32_t)valor_spi * 5000) / 255;
+				uint8_t PARTE_ENTERA = LECTURA_ADC / 1000;
+				uint8_t PARTE_DECIMAL = (LECTURA_ADC % 1000) / 10;
+				sprintf(buffer_salida, "Lectura Pote %d: %d.%02dV\r\n",
+				numero,  PARTE_ENTERA, PARTE_DECIMAL);
+				UART_PrintString(buffer_salida);
+			}
+			else
+			{
+				UART_PrintString("Error: Ingrese numero 1 o 2.\r\n");
+			}
 		}
-		else if (buffer_rx[0] == 'P' )
-		{
-			printf(buffer, "%d", dato_recibido2);
-			UART_PrintString(buffer);
-		}
-		
-		
 	}
 }

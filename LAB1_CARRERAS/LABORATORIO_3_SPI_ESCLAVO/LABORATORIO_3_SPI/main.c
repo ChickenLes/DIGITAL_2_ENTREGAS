@@ -42,8 +42,8 @@ int main(void)
     /* Replace with your application code */
     while (1) 
     {
-		POTE1 = ADC_READ(1)/4;
-		POTE2 = ADC_READ(2)/4;
+		POTE1 = ADC_READ(1);
+		POTE2 = ADC_READ(2);
 		
 		PORTD =(POTE2>>4)<<2;
     }
