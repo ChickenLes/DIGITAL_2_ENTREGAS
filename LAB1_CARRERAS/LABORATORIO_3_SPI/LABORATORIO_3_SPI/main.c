@@ -26,30 +26,29 @@
 #define SS_LOW()  PORTB &= ~(1 << DDB2);
 #define SS_HIGH() PORTB |= (1 << DDB2);
 
+
+
+
 int main(void)
 {
-	char buffer_recepcion[20];
-	char buffer_salida[50];
-	uint8_t valor_spi = 0;
 	
 	UART_CONF();
 	SPI_INIT(SPI_MASTER_DIV16, DATA_MSB, CLOCK_LOW, FIRST_EDGE);
 	sei();
 	
+	
+	char buffer_salida[50];
+	uint8_t valor_spi = 0;
+	
+	
 	UART_PrintString("1 o 2");
 
 	while (1)
 	{
-		if (COMANDO_NUEVO())
-		{
-			RECIBIR_COMANDO(buffer_recepcion);
+	
 			
-			int numero = atoi(buffer_recepcion);
-
-			if (numero == 1 || numero == 2)
-			{
 				SS_LOW();
-				SPI_WRITE(numero);
+				SPI_WRITE(1);
 				_delay_us(50);
 				SPI_WRITE(0x00);
 				valor_spi = SPDR;
@@ -58,13 +57,9 @@ int main(void)
 				uint8_t PARTE_ENTERA = LECTURA_ADC / 1000;
 				uint8_t PARTE_DECIMAL = (LECTURA_ADC % 1000) / 10;
 				sprintf(buffer_salida, "Lectura Pote %d: %d.%02dV\r\n",
-				numero,  PARTE_ENTERA, PARTE_DECIMAL);
+				1,  PARTE_ENTERA, PARTE_DECIMAL);
 				UART_PrintString(buffer_salida);
-			}
-			else
-			{
-				UART_PrintString("Error: Ingrese numero 1 o 2.\r\n");
-			}
-		}
+			
+	
 	}
 }
