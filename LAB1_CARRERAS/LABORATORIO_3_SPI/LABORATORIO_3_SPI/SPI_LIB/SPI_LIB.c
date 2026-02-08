@@ -28,7 +28,8 @@ void SPI_INIT(SPI_TYPE type, SPI_ORDER dataOrder, CLOCK_POLARITY clockPolarity, 
 		SPI_DDR &= ~((1<<SPI_MOSI)|(1<<SPI_SCK)|(1<<SPI_SS));
 	}
 	
-	SPCR = (1<<SPE)|(1<<SPIE)|dataOrder|clockPolarity|clockPhase;
+	//CAMBIO EN LA LIBRERIA DEL "MASTER" (1<<SPIE) ES INTERRUPCIÓN Y SE DEBE CAMBIAR
+	SPCR = (1<<SPE)|dataOrder|clockPolarity|clockPhase;
 	
 	if(type &(1<<MSTR))
 	{

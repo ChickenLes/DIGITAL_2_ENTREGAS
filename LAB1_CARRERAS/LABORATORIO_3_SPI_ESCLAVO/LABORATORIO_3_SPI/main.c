@@ -3,7 +3,7 @@
 // ELECTRÓNICA DIGITAL 2 - SECCIÓN - 20 -
 // LAB_SPI_MASTER.c
 // AUTOR1: ANTHONY ALEJANDRO BOTEO LÓPEZ
-//AUTOR1: ANTHONY ALEJANDRO BOTEO LÓPEZ
+//AUTOR1:ALMA LISBETH MATA IXCAYAU
 // PROYECTO: LABORATORIO SPI
 // HARDWARE: ATMEGA328P
 // CREADO: 02/02/2026
@@ -29,6 +29,9 @@ uint8_t POTE2 = 0;
 void setup(){
 	DDRD = 0xFF;
 	PORTD = 0x00;
+	DDRB|= ((1 << PINB0)|(1<<PINB1));
+	PORTB &= ~((1 << PINB0)|(1<<PINB1));
+	
 }
 
 
@@ -42,10 +45,11 @@ int main(void)
     /* Replace with your application code */
     while (1) 
     {
-		POTE1 = ADC_READ(1);
-		POTE2 = ADC_READ(2);
+		POTE1 = ADC_READ(1)/4;
+		POTE2 = ADC_READ(2)/4;
 		
-		PORTD =(POTE2>>4)<<2;
+		PORTD =(POTE2>>2)<<2;
+		PORTB = (PORTB & 0b11111100)|((POTE2 >> 6) & 0b00000011);
     }
 }
 
@@ -53,11 +57,11 @@ ISR(SPI_STC_vect){
 	
 	uint8_t ORDEN = SPDR;
 	
-	if(ORDEN == 1)
+	if(ORDEN == '1')
 	{
 	SPDR = POTE1;
 	}
-	else if (ORDEN == 2)
+	else if (ORDEN == '2')
 	{
 		SPDR = POTE2;
 	}

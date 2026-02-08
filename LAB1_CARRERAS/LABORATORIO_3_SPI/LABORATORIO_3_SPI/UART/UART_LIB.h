@@ -16,6 +16,7 @@ void UART_CONF(void);
 void UART_TRANS(uint8_t DATOS);
 void UART_PrintString(const char *str);
 void UART_PrintNumber(uint16_t num);
+void UART_PrintText(const char *str);
 
 //FUNCIONES ASÍNCRONAS
 uint8_t COMANDO_NUEVO(void); //CONTROLAR LA BANDERA 1 o 0

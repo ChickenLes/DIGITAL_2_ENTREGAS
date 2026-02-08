@@ -67,6 +67,13 @@ void UART_PrintNumber(uint16_t num) {
 	UART_PrintString(buffer);
 }
 
+//SE AGREGÓ EL NUEVO MODULO PARA IMPRIMIR TEXTOS MÁS LARGOS
+void UART_PrintText(const char *str){
+	
+	while(*str) UART_TRANS(*str++);
+}
+
+
 //LLAMAR SI LA BANDERA ESTA EN 1
 uint8_t COMANDO_NUEVO(void){
 	return comando_listo;
