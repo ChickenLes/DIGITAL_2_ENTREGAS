@@ -61,10 +61,13 @@ void Error_Handler(void);
 #define B1_GPIO_Port GPIOC
 #define J1_Pin GPIO_PIN_0
 #define J1_GPIO_Port GPIOC
+#define J1_EXTI_IRQn EXTI0_IRQn
 #define J2_Pin GPIO_PIN_1
 #define J2_GPIO_Port GPIOC
+#define J2_EXTI_IRQn EXTI1_IRQn
 #define START_Pin GPIO_PIN_2
 #define START_GPIO_Port GPIOC
+#define START_EXTI_IRQn EXTI2_IRQn
 #define DISPLAY_1_Pin GPIO_PIN_0
 #define DISPLAY_1_GPIO_Port GPIOA
 #define DISPLAY_2_Pin GPIO_PIN_1

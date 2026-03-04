@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 #include <stdbool.h>
 #include "DISPLAY_7SEG.h"
 /* USER CODE END Includes */
@@ -71,24 +72,21 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* USER CODE BEGIN 0 */
 void MUESTRA_LEDS(void){
+    //MUESTRA DE LEDS PARA EL JUGADOR 1
+    HAL_GPIO_WritePin(GPIOB, J1_1_Pin, (J1 == 1));
+    HAL_GPIO_WritePin(GPIOB, J1_2_Pin, (J1 == 2));
+    HAL_GPIO_WritePin(GPIOB, J1_3_Pin, (J1 == 3));
+    HAL_GPIO_WritePin(GPIOB, J1_4_Pin, (J1 == 4));
 
-	//MUESTRA DE LEDS PARA EL EL JUGADOR 1
-	HAL_GPIO_WritePin(GPIOB, J1_1_Pin, (J1 >= 1) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, J1_2_Pin, (J1 >= 2) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, J1_3_Pin, (J1 >= 3) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, J1_4_Pin, (J1 >= 4) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-
-	//MUESTRA DE LEDS PARA EL JUGADOR 2
-	HAL_GPIO_WritePin(GPIOC, J2_1_Pin, (J2 >= 1) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOC, J2_2_Pin, (J2 >= 2) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOC, J2_3_Pin, (J2 >= 3) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOC, J2_4_Pin, (J2 >= 4) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-
-
-
-
+    //MUESTRA DE LEDS PARA EL JUGADOR 2
+    HAL_GPIO_WritePin(GPIOC, J2_1_Pin, (J2 == 1));
+    HAL_GPIO_WritePin(GPIOC, J2_2_Pin, (J2 == 2));
+    HAL_GPIO_WritePin(GPIOC, J2_3_Pin, (J2 == 3));
+    HAL_GPIO_WritePin(GPIOC, J2_4_Pin, (J2 == 4));
 }
+/* USER CODE END 0 */
 
 
 
@@ -127,7 +125,7 @@ int main(void)
   MX_TIM1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  mostrar_display(0);
+  mostrar_display(5);
 
   /* USER CODE END 2 */
 
@@ -135,35 +133,45 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  if (ESTADO_DISPLAY == 1)
+	  	{
+	  		Play_time = false;
+	  		J1 = 0;
+	  		J2 = 0;
+	  		MUESTRA_LEDS();
+
+	  		for(int8_t i = 5; i>= 0; i--)
+	  		{
+	  			mostrar_display(i);
+	  			HAL_Delay(1000);
+	  		}
+
+	  		Play_time = true;
+	  		ESTADO_DISPLAY = 0;
+	  		HAL_GPIO_WritePin(GPIOA, LD2_Pin, GPIO_PIN_SET);
+	  	}
+
+	  if(J1 >= 5 || J2 >= 5)
+	      {
+	          Play_time = false;
+	          HAL_GPIO_WritePin(GPIOA, LD2_Pin, GPIO_PIN_RESET);
+
+	          //MOSTRAR NUMEROS DEL DISPLAY
+	          mostrar_display(J1 >= 5 ? 1 : 2);
+
+	          //ENCENDER TODOSL OS LEDS DEL GANADOR
+	          if(J1 >= 5)
+	          {
+	              HAL_GPIO_WritePin(GPIOB, J1_1_Pin|J1_2_Pin|J1_3_Pin|J1_4_Pin, GPIO_PIN_SET);
+	          }
+	          else
+	          {
+	              HAL_GPIO_WritePin(GPIOC, J2_1_Pin|J2_2_Pin|J2_3_Pin|J2_4_Pin, GPIO_PIN_SET);
+	          }
+	      }
+
     /* USER CODE END WHILE */
-
-	if (ESTADO_DISPLAY == 1)
-	{
-		Play_time = false;
-		J1 = 0;
-		J2 = 0;
-		MUESTRA_LEDS();
-
-		for(int8_t i = 5; i>= 0; i--)
-		{
-			mostrar_display(i);
-			HAL_Delay(1000);
-		}
-
-		Play_time = true;
-		ESTADO_DISPLAY = 0;
-		HAL_GPIO_WritePin(GPIOA, LD2_Pin, GPIO_PIN_SET);
-
-	}
-	if(J1 >= 4 || J2 >= 4)
-	{
-		Play_time = false;
-		HAL_GPIO_WritePin(GPIOA, LD2_Pin, GPIO_PIN_RESET);
-		mostrar_display(J1 >= 4 ? 1:2);
-	}
-
-
-
 
     /* USER CODE BEGIN 3 */
   }
@@ -359,6 +367,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 3);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 4);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 5);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
@@ -376,13 +394,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 	else if(Play_time)
 	{
-		if (GPIO_Pin == J1_Pin && J1ANTI == 0 && J1 < 4) {
+		if (GPIO_Pin == J1_Pin && J1ANTI == 0 && J1 < 5) {
 		            J1++;
 		            MUESTRA_LEDS();
 		            J1ANTI = 200;
 		            HAL_TIM_Base_Start_IT(&htim1);
 		        }
-		        else if (GPIO_Pin == J2_Pin && J2ANTI == 0 && J2 < 4) {
+		if (GPIO_Pin == J2_Pin && J2ANTI == 0 && J2 < 5) {
 		            J2++;
 		            MUESTRA_LEDS();
 		            J2ANTI = 200;
@@ -405,6 +423,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         }
     }
 }
+
 
 
 /* USER CODE END 4 */

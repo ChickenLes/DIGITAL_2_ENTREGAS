@@ -1,6 +1,6 @@
 Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.o: \
  ../Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.c \
- C:/Users/itzle/Documents/GitHub/DIGITAL_2/LABORATORIO_6/LABORATORIO6/Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.h \
+ C:/Users/Bren/Documents/GitHub/DIGITAL_2_ENTREGAS/LABORATORIO_6/LABORATORIO6/Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -30,7 +30,7 @@ Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.o: \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/main.h ../Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.h
-C:/Users/itzle/Documents/GitHub/DIGITAL_2/LABORATORIO_6/LABORATORIO6/Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.h:
+C:/Users/Bren/Documents/GitHub/DIGITAL_2_ENTREGAS/LABORATORIO_6/LABORATORIO6/Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:

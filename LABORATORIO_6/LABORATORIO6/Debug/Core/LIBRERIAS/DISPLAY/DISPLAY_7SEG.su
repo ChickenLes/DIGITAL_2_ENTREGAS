@@ -1,2 +1,2 @@
-../Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.c:17:6:iniciar_display	8	static
-../Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.c:23:6:mostrar_display	24	static
+../Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.c:31:6:iniciar_display	8	static
+../Core/LIBRERIAS/DISPLAY/DISPLAY_7SEG.c:37:6:mostrar_display	24	static
