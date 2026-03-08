@@ -163,11 +163,11 @@ int main(void)
 	          //ENCENDER TODOSL OS LEDS DEL GANADOR
 	          if(J1 >= 5)
 	          {
-	              HAL_GPIO_WritePin(GPIOB, J1_1_Pin|J1_2_Pin|J1_3_Pin|J1_4_Pin, GPIO_PIN_SET);
+	              HAL_GPIO_WritePin(GPIOB, J1_1_Pin|J1_2_Pin|J1_3_Pin|J1_4_Pin);
 	          }
 	          else
 	          {
-	              HAL_GPIO_WritePin(GPIOC, J2_1_Pin|J2_2_Pin|J2_3_Pin|J2_4_Pin, GPIO_PIN_SET);
+	              HAL_GPIO_WritePin(GPIOC, J2_1_Pin|J2_2_Pin|J2_3_Pin|J2_4_Pin);
 	          }
 	      }
 
@@ -413,12 +413,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
-    if (htim->Instance == TIM1) {
+    if (htim->Instance == TIM1)
+    {
         if (J1ANTI > 0) J1ANTI = (J1ANTI > 50) ? J1ANTI - 50 : 0;
         if (J2ANTI > 0) J2ANTI = (J2ANTI > 50) ? J2ANTI - 50 : 0;
         if (STARTANTI > 0) STARTANTI = (STARTANTI > 50) ? STARTANTI - 50 : 0;
 
-        if (J1ANTI == 0 && J2ANTI == 0 && STARTANTI == 0) {
+        if (J1ANTI == 0 && J2ANTI == 0 && STARTANTI == 0)
+        {
             HAL_TIM_Base_Stop_IT(&htim1);
         }
     }
