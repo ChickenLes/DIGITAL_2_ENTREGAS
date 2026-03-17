@@ -97,9 +97,7 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
-  HAL_ADC_Start_DMA(hadc, (uint8_t*) ADC_VALOR, 2);
 
-  HAL_UARTEx_ReceiveToIdle_IT(huart, &DATOS_RX, 1);
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*) ADC_VALOR, 2);
 
 
@@ -111,14 +109,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(VALORES_ADC[0] > 2048)
-	  {
-		  prinf("Arriba\r\n");
     /* USER CODE BEGIN 3 */
 
-	  }
 
-	  else if (VALORES_ADC[0] < 2048) {
     if(ADC_VALOR[0] > 2048) {
         printf("Arriba\r\n");
     }
@@ -290,33 +283,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance==USART2)
-	{
-		switch(DATOS_RX)
-		{
-			case "U":
-				printf("ARRIBA");
-			break;
-			case "D":
-				printf("ABAJO");
-			break;
-			case "R":
-				printf("DERECHA");
-			break;
-			case "L":
-				printf("IZQUIERDA");
-			break;
-			case "B":
-				printf("B");
-			break;
-			case "A":
-				printf("A");
-			break;
-
-		}
-
-		HAL_UARTEx_ReceiveToIdle_IT(&huart2, &DATOS_RX, 1);
-	}
   if(huart->Instance == USART2)
   {
 
