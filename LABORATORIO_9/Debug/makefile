@@ -60,8 +60,8 @@ all: main-build
 main-build: LABORATORIO_9.elf secondary-outputs
 
 # Tool invocations
-LABORATORIO_9.elf LABORATORIO_9.map: $(OBJS) $(USER_OBJS) C:\Users\itzle\Documents\GitHub\DIGITAL_2\LABORATORIO_9\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "LABORATORIO_9.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\itzle\Documents\GitHub\DIGITAL_2\LABORATORIO_9\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LABORATORIO_9.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+LABORATORIO_9.elf LABORATORIO_9.map: $(OBJS) $(USER_OBJS) C:\Users\Bren\Documents\GitHub\DIGITAL_2_ENTREGAS\LABORATORIO_9\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "LABORATORIO_9.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Bren\Documents\GitHub\DIGITAL_2_ENTREGAS\LABORATORIO_9\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LABORATORIO_9.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

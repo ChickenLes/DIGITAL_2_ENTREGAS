@@ -61,17 +61,17 @@ uint8_t  pending_action = 0;
 uint8_t  state = 0;
 
 char menu[] =
-              "1. Canción 1 \r\n"
-              "2. Canción 2  \r\n"
+              "1. Cancion 1 \r\n"
+              "2. Cancion 2  \r\n"
               "Seleccione una opcion: ";
 
-//CANCCION 1
-int STmelody[] = { 131, 165, 196, 247, 262, 247, 196, 165,
-                   131, 165, 196, 247, 262, 247, 196, 165,
-                   131, 165, 196, 247, 262, 247, 196, 165,
-                   131, 165, 196, 247, 262, 247, 196, 165,
-                   131, 165, 196, 247, 262, 247, 196, 165,
-                   131, 165, 196, 247, 262, 247, 196, 165 };
+// CANCION 1 (CHAT GPT)
+int STmelody[] = { 523, 659, 784, 988, 1047, 988, 784, 659,
+                   523, 659, 784, 988, 1047, 988, 784, 659,
+                   523, 659, 784, 988, 1047, 988, 784, 659,
+                   523, 659, 784, 988, 1047, 988, 784, 659,
+                   523, 659, 784, 988, 1047, 988, 784, 659,
+                   523, 659, 784, 988, 1047, 988, 784, 659 };
 
 int STdurations[] = { 188, 188, 188, 188, 188, 188, 188, 188,
                       188, 188, 188, 188, 188, 188, 188, 188,
@@ -80,7 +80,7 @@ int STdurations[] = { 188, 188, 188, 188, 188, 188, 188, 188,
                       188, 188, 188, 188, 188, 188, 188, 188,
                       188, 188, 188, 188, 188, 188, 188, 188 };
 
-//CANCION 2
+// CANCION 2
 int KidsMelody[] = { 784, 698, 523, 587, 784, 698, 523, 587, 784, 698, 523, 587,
                      622, 587, 466, 523, 622, 587, 466, 523, 622, 587, 466, 523,
                      784, 698, 523, 587, 784, 698, 523, 587, 784, 698, 523, 587,
@@ -117,7 +117,7 @@ void Show_Menu(void) {
     HAL_UART_Transmit(&huart2, (uint8_t*)menu, strlen(menu), 100);
 }
 
-//DAC
+// DAC
 void generarSin(void) {
     for (int x = 0; x < size; x++) {
         Ysine[x] = ((sin(x * 2 * PI / size) + 1) * (4096 / 2));
@@ -135,14 +135,13 @@ void noToneDAC(void) {
 }
 
 void playToneDAC(int *tone, int *duration, int *pause, int Nsize) {
-    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nTocando Audio 1 (DAC)...\r\n", 28, 100);
+    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n(DAC)\r\n", 9, 100);
     state = 1;
 
     HAL_TIM_Base_Start(&htim6);
     HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t*)Ysine, size, DAC_ALIGN_12B_R);
 
     for (int i = 0; i < Nsize; i++) {
-        int valorARR = calcularARR(tone[i]);
         int dur = duration[i];
         int pauseBetweenTones = 0;
 
@@ -150,14 +149,20 @@ void playToneDAC(int *tone, int *duration, int *pause, int Nsize) {
             pauseBetweenTones = pause[i] - duration[i];
         }
 
-        TIM6->ARR = valorARR;
+        if (tone[i] == 0) {
+            noToneDAC();
+        } else {
+            int valorARR = calcularARR(tone[i]);
+            TIM6->ARR = valorARR;
+        }
+
         HAL_Delay(dur);
         noToneDAC();
 
         if (pauseBetweenTones > 0) {
             HAL_Delay(pauseBetweenTones);
         } else {
-            HAL_Delay(5);
+            HAL_Delay(10); // Ligeramente ajustado para limpiar la transicion de sonido
         }
     }
 
@@ -167,7 +172,7 @@ void playToneDAC(int *tone, int *duration, int *pause, int Nsize) {
     Show_Menu();
 }
 
-//PWM
+// PWM
 int presForFrequencyPWM(int frequency) {
     if (frequency == 0) return 0;
     return ((TIM_FREQ / (ARR_PWM * frequency)) - 1);
@@ -178,14 +183,13 @@ void noTonePWM(void) {
 }
 
 void playTonePWM(int *tone, int *duration, int *pause, int Nsize) {
-    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nTocando Audio 2 (PWM)...\r\n", 28, 100);
+    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n(PWM)\r\n", 9, 100);
     state = 2;
 
     __HAL_TIM_MOE_ENABLE(&htim1);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 
     for (int i = 0; i < Nsize; i++) {
-        int prescaler = presForFrequencyPWM(tone[i]);
         int dur = duration[i];
         int pauseBetweenTones = 0;
 
@@ -193,15 +197,22 @@ void playTonePWM(int *tone, int *duration, int *pause, int Nsize) {
             pauseBetweenTones = pause[i] - duration[i];
         }
 
-        __HAL_TIM_SET_PRESCALER(&htim1, prescaler);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 50);
+        if (tone[i] == 0) {
+            noTonePWM();
+        } else {
+            int prescaler = presForFrequencyPWM(tone[i]);
+            __HAL_TIM_SET_PRESCALER(&htim1, prescaler);
+            htim1.Instance->EGR = TIM_EGR_UG; // FUERZA LA ACTUALIZACIÓN LIMPIA DEL TIMER
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 50);
+        }
+
         HAL_Delay(dur);
         noTonePWM();
 
         if (pauseBetweenTones > 0) {
             HAL_Delay(pauseBetweenTones);
         } else {
-            HAL_Delay(5);
+            HAL_Delay(10);
         }
     }
 
@@ -211,7 +222,7 @@ void playTonePWM(int *tone, int *duration, int *pause, int Nsize) {
     Show_Menu();
 }
 
-//UART
+// UART
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
         if (state == 0) {
