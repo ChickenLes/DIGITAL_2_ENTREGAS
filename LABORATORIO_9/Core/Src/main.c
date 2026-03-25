@@ -162,7 +162,7 @@ void playToneDAC(int *tone, int *duration, int *pause, int Nsize) {
         if (pauseBetweenTones > 0) {
             HAL_Delay(pauseBetweenTones);
         } else {
-            HAL_Delay(10); // Ligeramente ajustado para limpiar la transicion de sonido
+            HAL_Delay(10);
         }
     }
 
@@ -202,7 +202,7 @@ void playTonePWM(int *tone, int *duration, int *pause, int Nsize) {
         } else {
             int prescaler = presForFrequencyPWM(tone[i]);
             __HAL_TIM_SET_PRESCALER(&htim1, prescaler);
-            htim1.Instance->EGR = TIM_EGR_UG; // FUERZA LA ACTUALIZACIÓN LIMPIA DEL TIMER
+            htim1.Instance->EGR = TIM_EGR_UG;
             __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 50);
         }
 
