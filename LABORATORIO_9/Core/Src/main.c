@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -28,16 +29,115 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define TIM_FREQ 84000000
+#define PSC_DAC 1
+#define size 128
+#define PI 3.1415926535
 
+// ==========================================
+// DICCIONARIO DE NOTAS (Frecuencias en Hz)
+// ==========================================
+
+// --- BAJOS (Octavas 2 y 3) - Para ritmos pesados y marchas ---
+#define C2  65
+#define Db2 69
+#define D2  73
+#define Eb2 78
+#define E2  82
+#define F2  87
+#define Gb2 92
+#define G2  98
+#define Ab2 104
+#define A2  110
+#define Bb2 117
+#define B2  123
+
+#define C3  131
+#define Db3 139
+#define D3  147
+#define Eb3 156
+#define E3  165
+#define F3  175
+#define Gb3 185
+#define G3  196
+#define Ab3 208
+#define A3  220
+#define Bb3 233
+#define B3  247
+
+// --- MEDIOS (Octavas 4, 5 y 6) - Melodías principales ---
+#define C4  262
+#define Db4 277
+#define D4  294
+#define Eb4 311
+#define E4  330
+#define F4  349
+#define Gb4 370
+#define G4  392
+#define Ab4 415
+#define A4  440
+#define Bb4 466
+#define B4  494
+
+#define C5  523
+#define Db5 554
+#define D5  587
+#define Eb5 622
+#define E5  659
+#define F5  698
+#define Gb5 740
+#define G5  784
+#define Ab5 831
+#define A5  880
+#define Bb5 932
+#define B5  988
+
+#define C6  1047
+#define Db6 1109
+#define D6  1175
+#define Eb6 1245
+#define E6  1319
+#define F6  1397
+#define Gb6 1480
+#define G6  1568
+#define Ab6 1661
+#define A6  1760
+#define Bb6 1865
+#define B6  1976
+
+// --- AGUDOS Y SFX (Octava 7) - Monedas, saltos, láseres ---
+#define C7  2093
+#define Db7 2217
+#define D7  2349
+#define Eb7 2489
+#define E7  2637
+#define F7  2794
+#define Gb7 2960
+#define G7  3136
+#define Ab7 3322
+#define A7  3520
+#define Bb7 3729
+#define B7  3951
+
+// Direccion I2C del ESP32 (7-bit, shifted left for HAL)
+#define ESP32_I2C_ADDR  (0x10 << 1)
+
+// Comandos recibidos del ESP32
+#define CMD_RIGHT   'R'
+#define CMD_LEFT    'L'
+#define CMD_UP      'U'
+#define CMD_DOWN    'D'
+#define CMD_A       'A'
+#define CMD_B       'B'
+#define CMD_PAUSE   'T'
+#define CMD_PLAY    'P'
+#define CMD_DEATH   'M'
+#define CMD_WIN     'W'
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define size 128
-#define PI 3.1415926
-#define TIM_FREQ 84000000
-#define PSC_DAC 1
-#define ARR_PWM 100
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +149,8 @@
 DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac1;
 
+I2C_HandleTypeDef hi2c1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim6;
 
@@ -56,40 +158,176 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 uint32_t Ysine[size];
-uint8_t  rx_byte;
-uint8_t  pending_action = 0;
-uint8_t  state = 0;
+uint8_t  receivedRX = 0;
+volatile uint8_t flagChange = 0;
 
-char menu[] =
-              "1. Cancion 1 \r\n"
-              "2. Cancion 2  \r\n"
-              "Seleccione una opcion: ";
+// --- I2C interrupt variables ---
+uint8_t  i2cRxBuf = 0;
+volatile uint8_t flagI2C = 0;
+volatile uint8_t i2cReady = 1;
 
-// CANCION 1 (CHAT GPT)
-int STmelody[] = { 523, 659, 784, 988, 1047, 988, 784, 659,
-                   523, 659, 784, 988, 1047, 988, 784, 659,
-                   523, 659, 784, 988, 1047, 988, 784, 659,
-                   523, 659, 784, 988, 1047, 988, 784, 659,
-                   523, 659, 784, 988, 1047, 988, 784, 659,
-                   523, 659, 784, 988, 1047, 988, 784, 659 };
+// --- Estado de canciones ---
+uint8_t currentSong = 0;
+uint8_t isPaused = 0;
 
-int STdurations[] = { 188, 188, 188, 188, 188, 188, 188, 188,
-                      188, 188, 188, 188, 188, 188, 188, 188,
-                      188, 188, 188, 188, 188, 188, 188, 188,
-                      188, 188, 188, 188, 188, 188, 188, 188,
-                      188, 188, 188, 188, 188, 188, 188, 188,
-                      188, 188, 188, 188, 188, 188, 188, 188 };
+// =====================================================================
+// EFECTO: R y L - Paso corto (tap tap)
+// =====================================================================
+int sfx_walk[] = {
+    E4, 0, G4, 0, E4, 0
+};
+int dur_walk[] = {
+    40, 20, 40, 20, 40, 30
+};
 
-// CANCION 2
-int KidsMelody[] = { 784, 698, 523, 587, 784, 698, 523, 587, 784, 698, 523, 587,
-                     622, 587, 466, 523, 622, 587, 466, 523, 622, 587, 466, 523,
-                     784, 698, 523, 587, 784, 698, 523, 587, 784, 698, 523, 587,
-                     622, 587, 466, 523, 622, 587, 466, 523, 622, 587, 466, 523 };
+// =====================================================================
+// EFECTO: U (Arriba) - Blip ultra corto
+// =====================================================================
+int sfx_up[] = {
+    C5, E5
+};
+int dur_up[] = {
+    25, 35
+};
 
-int KidsDurations[] = { 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,
-                        200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,
-                        200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,
-                        200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200 };
+// =====================================================================
+// EFECTO: D (Abajo) - Boop descendente suave
+// =====================================================================
+int sfx_down[] = {
+    E5, C5, A4
+};
+int dur_down[] = {
+    35, 35, 50
+};
+
+// =====================================================================
+// EFECTO: A - Golpe seco (hit)
+// =====================================================================
+int sfx_a[] = {
+    C6
+};
+int dur_a[] = {
+    25
+};
+
+// =====================================================================
+// EFECTO: B - Salto tipo Mario (sweep rapido hacia arriba)
+// =====================================================================
+int sfx_b[] = {
+    C4, E4, G4, C5, E5
+};
+int dur_b[] = {
+    20, 20, 20, 20, 30
+};
+
+// =====================================================================
+// CANCION T (Pausa) - Tema chill de espera estilo 8-bit
+// =====================================================================
+int song_pause[] = {
+		// El "Riff" de bajo inicial (muy rápido)
+		    G4, G4, Bb4, G4, C5, G4, Bb4, G4,
+		    G4, G4, Bb4, G4, C5, G4, Bb4, G4,
+
+		    // Melodía de entrada (Heroica)
+		    D5, G4, Bb4, C5, D5, G4, Bb4, C5,
+		    D5, G4, Bb4, C5, D5, Eb5, D5, C5,
+
+		    // Subida de tensión
+		    G5, 0, G5, 0, F5, 0, F5, 0,
+		    Eb5, 0, Eb5, 0, D5, 0, D5, 0,
+
+		    // El Clímax (Spear of Justice acelerado)
+		    G5, F5, Eb5, D5, C5, Bb4, A4, G4,
+		    D5, G5, F5, G5, A5, Bb5, C6, D6
+};
+int dur_pause[] = {
+		// Riff inicial (80ms por nota para que se sienta el galope)
+		    80, 80, 80, 80, 80, 80, 80, 80,
+		    80, 80, 80, 80, 80, 80, 80, 80,
+
+		    // Melodía (Más rápida que la anterior)
+		    120, 120, 120, 120, 120, 120, 120, 120,
+		    120, 120, 120, 120, 120, 120, 120, 120,
+
+		    // Tensión (Notas cortadas / Staccato)
+		    100, 50, 100, 50, 100, 50, 100, 50,
+		    100, 50, 100, 50, 100, 50, 100, 50,
+
+		    // Clímax
+		    100, 100, 100, 100, 100, 100, 100, 100,
+		    100, 100, 100, 100, 100, 100, 100, 400
+};
+
+// =====================================================================
+// CANCION P (Play) - Tema energico de accion 8-bit
+// =====================================================================
+int song_play[] = {
+    E5, E5, 0, E5, 0, C5, E5, 0,
+    G5, 0, G4, 0,
+    C5, 0, G4, 0, E4, 0,
+    A4, B4, Bb4, A4, 0,
+    G4, E5, G5, A5, 0,
+    F5, G5, 0, E5, 0,
+    C5, D5, B4, 0
+};
+int dur_play[] = {
+    100, 100, 50, 100, 50, 100, 100, 100,
+    200, 100, 200, 100,
+    150, 50, 150, 50, 150, 50,
+    100, 100, 100, 150, 50,
+    100, 100, 100, 200, 50,
+    100, 100, 50, 150, 50,
+    100, 100, 200, 200
+};
+
+// =====================================================================
+// M (Muerte) - Game Over Arcade (extraido de freesound MP3)
+// 35 notas, ~1s - bajada cromatica dramatica
+// =====================================================================
+int tone_death[] = {
+		// Paso lento inicial (Pa - Pa - Pa, pira-Pa)
+		    C4, 0, C4, 0, C4, Eb4, D4, 0,
+		    // Segundo paso, bajando de tono
+		    D4, 0, C4, G4, 0,
+		    // Caída dramática final hacia la tumba
+		    Ab4, G4, F4, Eb4, D4, C4
+};
+int dur_death[] = {
+		// Tiempos largos con silencios pesados
+		    500, 100, 500, 100, 350, 150, 800, 100,
+		    500, 100, 300, 800, 100,
+		    // La caída lenta
+		    400, 400, 400, 400, 400, 1200
+};
+
+// =====================================================================
+// W (Win) - 8-bit Victory Theme (extraido de moodmode MP3)
+// 254 notas, ~12s - melodia de victoria
+// =====================================================================
+int tone_win[] = {
+		// Compás 2
+		    E5, E5, D5, E5,
+		    // Compás 3
+		    Gb5, E5, Eb5, E5,
+		    // Compás 4
+		    D5, D5, Db5, D5,
+		    // Compás 5
+		    E5, D5, Db5, B4,
+		    // Compás 6
+		    C5, C5, B4, A4,
+		    // Compás 7
+		    Ab4, A4, B4
+};
+int dur_win[] = {
+		160, 80, 160, 80, // Ritmo: Ta - ta, Ta - ta
+		    160, 80, 160, 80,
+		    160, 80, 160, 80,
+		    160, 80, 160, 80,
+		    160, 80, 160, 80,
+		    160, 80, 240      // Cierre del intro
+};
+
+char mensaje[] = "\r\n--- CONSOLA DK (DAC + I2C IT) ---\r\nComandos: R L U D A B T P M W\r\n> ";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,137 +338,185 @@ static void MX_DAC_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM6_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-void Show_Menu(void);
 void generarSin(void);
-int calcularARR(int freq);
-int presForFrequencyPWM(int frequency);
-void noToneDAC(void);
-void noTonePWM(void);
-void playToneDAC(int *tone, int *duration, int *pause, int Nsize);
-void playTonePWM(int *tone, int *duration, int *pause, int Nsize);
+int  calcularARR(int freq);
+void playTone_DAC1(int *tone, int *duration, int Nsize);
+void sendMenu(void);
+void sendUART(char *str);
+void processCommand(uint8_t cmd);
+void startI2C_Receive_IT(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void Show_Menu(void) {
-    HAL_UART_Transmit(&huart2, (uint8_t*)menu, strlen(menu), 100);
-}
-
-// DAC
 void generarSin(void) {
     for (int x = 0; x < size; x++) {
-        Ysine[x] = ((sin(x * 2 * PI / size) + 1) * (4096 / 2));
+        Ysine[x] = (uint32_t)(2048.0 + (sin(x * 2.0 * PI / size) * 800.0));
     }
 }
 
 int calcularARR(int freq) {
-    if (freq == 0) return 0;
-    int TF = size * freq;
-    return ((TIM_FREQ / ((PSC_DAC + 1) * TF)) - 1);
+    if (freq <= 0) return 65535;
+    return ((TIM_FREQ / ((PSC_DAC + 1) * size * freq)) - 1);
 }
 
-void noToneDAC(void) {
-    TIM6->ARR = 0;
+void sendUART(char *str) {
+    HAL_UART_Transmit(&huart2, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
 }
 
-void playToneDAC(int *tone, int *duration, int *pause, int Nsize) {
-    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n(DAC)\r\n", 9, 100);
-    state = 1;
+void sendMenu(void) {
+    HAL_UART_Transmit(&huart2, (uint8_t*)mensaje, strlen(mensaje), HAL_MAX_DELAY);
+    HAL_Delay(100);
+}
 
+void playTone_DAC1(int *tone, int *duration, int Nsize) {
     HAL_TIM_Base_Start(&htim6);
-    HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t*)Ysine, size, DAC_ALIGN_12B_R);
 
     for (int i = 0; i < Nsize; i++) {
-        int dur = duration[i];
-        int pauseBetweenTones = 0;
-
-        if (pause != NULL) {
-            pauseBetweenTones = pause[i] - duration[i];
-        }
-
         if (tone[i] == 0) {
-            noToneDAC();
+            HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+            HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 2048);
         } else {
-            int valorARR = calcularARR(tone[i]);
-            TIM6->ARR = valorARR;
+            htim6.Instance->ARR = calcularARR(tone[i]);
+            HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t*)Ysine, size, DAC_ALIGN_12B_R);
         }
 
-        HAL_Delay(dur);
-        noToneDAC();
+        HAL_Delay(duration[i]);
 
-        if (pauseBetweenTones > 0) {
-            HAL_Delay(pauseBetweenTones);
-        } else {
-            HAL_Delay(10);
-        }
+        HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+        HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 2048);
+        HAL_Delay(15);
     }
 
     HAL_TIM_Base_Stop(&htim6);
-    HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-    state = 0;
-    Show_Menu();
 }
 
-// PWM
-int presForFrequencyPWM(int frequency) {
-    if (frequency == 0) return 0;
-    return ((TIM_FREQ / (ARR_PWM * frequency)) - 1);
+// =====================================================================
+// Lanzar recepcion I2C por interrupcion
+// =====================================================================
+void startI2C_Receive_IT(void) {
+	i2cReady = 0;
+
+	    HAL_I2C_Slave_Receive_IT(&hi2c1, &i2cRxBuf, 1);
 }
 
-void noTonePWM(void) {
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-}
+// =====================================================================
+// Procesar comando recibido (UART o I2C)
+// =====================================================================
+void processCommand(uint8_t cmd) {
+    char buf[60];
 
-void playTonePWM(int *tone, int *duration, int *pause, int Nsize) {
-    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n(PWM)\r\n", 9, 100);
-    state = 2;
+    switch (cmd) {
 
-    __HAL_TIM_MOE_ENABLE(&htim1);
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+    case CMD_RIGHT:
+    case 'r':
+        sendUART("\r\n>> [R] Derecha\r\n");
+        playTone_DAC1(sfx_walk, dur_walk, sizeof(sfx_walk)/sizeof(sfx_walk[0]));
+        break;
 
-    for (int i = 0; i < Nsize; i++) {
-        int dur = duration[i];
-        int pauseBetweenTones = 0;
+    case CMD_LEFT:
+    case 'l':
+        sendUART("\r\n>> [L] Izquierda\r\n");
+        playTone_DAC1(sfx_walk, dur_walk, sizeof(sfx_walk)/sizeof(sfx_walk[0]));
+        break;
 
-        if (pause != NULL) {
-            pauseBetweenTones = pause[i] - duration[i];
-        }
+    case CMD_UP:
+    case 'u':
+        sendUART("\r\n>> [U] Arriba\r\n");
+        playTone_DAC1(sfx_up, dur_up, sizeof(sfx_up)/sizeof(sfx_up[0]));
+        break;
 
-        if (tone[i] == 0) {
-            noTonePWM();
+    case CMD_DOWN:
+    case 'd':
+        sendUART("\r\n>> [D] Abajo\r\n");
+        playTone_DAC1(sfx_down, dur_down, sizeof(sfx_down)/sizeof(sfx_down[0]));
+        break;
+
+    case CMD_A:
+    case 'a':
+        sendUART("\r\n>> [A] Golpe\r\n");
+        playTone_DAC1(sfx_a, dur_a, sizeof(sfx_a)/sizeof(sfx_a[0]));
+        break;
+
+    case CMD_B:
+    case 'b':
+        sendUART("\r\n>> [B] Salto\r\n");
+        playTone_DAC1(sfx_b, dur_b, sizeof(sfx_b)/sizeof(sfx_b[0]));
+        break;
+
+    case CMD_PAUSE:
+    case 't':
+        isPaused = 1;
+        sendUART("\r\n>> [T] Pausa\r\n");
+        playTone_DAC1(song_pause, dur_pause, sizeof(song_pause)/sizeof(song_pause[0]));
+        break;
+
+    case CMD_PLAY:
+    case 'p':
+        isPaused = 0;
+        if (currentSong == 0) {
+            sendUART("\r\n>> [P] Play - Tema accion\r\n");
+            playTone_DAC1(song_play, dur_play, sizeof(song_play)/sizeof(song_play[0]));
+            currentSong = 1;
         } else {
-            int prescaler = presForFrequencyPWM(tone[i]);
-            __HAL_TIM_SET_PRESCALER(&htim1, prescaler);
-            htim1.Instance->EGR = TIM_EGR_UG;
-            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 50);
+            sendUART("\r\n>> [P] Play - Tema chill\r\n");
+            playTone_DAC1(song_pause, dur_pause, sizeof(song_pause)/sizeof(song_pause[0]));
+            currentSong = 0;
         }
+        break;
 
-        HAL_Delay(dur);
-        noTonePWM();
+    case CMD_DEATH:
+    case 'm':
 
-        if (pauseBetweenTones > 0) {
-            HAL_Delay(pauseBetweenTones);
-        } else {
-            HAL_Delay(10);
-        }
-    }
 
-    HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-    __HAL_TIM_MOE_DISABLE(&htim1);
-    state = 0;
-    Show_Menu();
-}
 
-// UART
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == USART2) {
-        if (state == 0) {
-            if (rx_byte == '1') pending_action = 1;
-            else if (rx_byte == '2') pending_action = 2;
-            else pending_action = 3;
-        }
-        HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+        {  // <-- Agrega esta llave
+        	 sendUART("\r\n>> [M] GAME OVER\r\n");
+
+                // Calculamos cuántas notas tiene la canción
+                int size_death = sizeof(tone_death) / sizeof((tone_death)[0]);
+
+                // Creamos un arreglo temporal para las duraciones nuevas
+                int dur_lenta[size_death];
+
+                for (int i = 0; i < size_death; i++) {
+                    // MULTIPLICADOR DE VELOCIDAD:
+                    // Pon * 2, * 3 o * 4 hasta encontrar la velocidad perfecta.
+                    dur_lenta[i] = dur_death[i] * 1;
+                }
+
+                // Reproducimos usando el arreglo modificado
+                playTone_DAC1(tone_death, dur_lenta, size_death);
+                break;
+            }  // <-- Y cierra la llave aquí
+    case CMD_WIN:
+    case 'w':
+    {  // <-- Agrega esta llave
+            sendUART("\r\n>> [W] VICTORY!\r\n");
+
+            // Calculamos cuántas notas tiene la canción
+            int size_win = sizeof(tone_win) / sizeof(tone_win[0]);
+
+            // Creamos un arreglo temporal para las duraciones nuevas
+            int dur_lenta[size_win];
+
+            for (int i = 0; i < size_win; i++) {
+                // MULTIPLICADOR DE VELOCIDAD:
+                // Pon * 2, * 3 o * 4 hasta encontrar la velocidad perfecta.
+                dur_lenta[i] = dur_win[i] * 1;
+            }
+
+            // Reproducimos usando el arreglo modificado
+            playTone_DAC1(tone_win, dur_lenta, size_win);
+            break;
+        }  // <-- Y cierra la llave aquí
+
+    default:
+        sprintf(buf, "\r\n>> Comando no reconocido: 0x%02X ('%c')\r\n", cmd, cmd);
+        sendUART(buf);
+        break;
     }
 }
 /* USER CODE END 0 */
@@ -269,32 +555,53 @@ int main(void)
   MX_TIM1_Init();
   MX_USART2_UART_Init();
   MX_TIM6_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
   generarSin();
 
-  Show_Menu();
-  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
 
+
+
+
+  // Arrancar UART RX por interrupcion
+  HAL_UART_Receive_IT(&huart2, &receivedRX, 1);
+
+  // Arrancar primera recepcion I2C por interrupcion
+  startI2C_Receive_IT();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  sendMenu();
   while (1)
   {
-      if (pending_action == 1) {
-          pending_action = 0;
-          playToneDAC(STmelody, STdurations, NULL, (sizeof(STmelody)/sizeof(STmelody[0])));
+      // --- Dato recibido por UART ---
+      if (flagChange) {
+          flagChange = 0;
+          processCommand(receivedRX);
+          sendMenu();
       }
-      else if (pending_action == 2) {
-          pending_action = 0;
-          playTonePWM(KidsMelody, KidsDurations, NULL, (sizeof(KidsMelody)/sizeof(KidsMelody[0])));
+
+      // --- Dato recibido por I2C (interrupcion) ---
+      if (flagI2C) {
+          flagI2C = 0;
+          char buf[40];
+          sprintf(buf, "\r\n[I2C] Recibido: '%c' (0x%02X)\r\n", i2cRxBuf, i2cRxBuf);
+          sendUART(buf);
+          processCommand(i2cRxBuf);
+          sendMenu();
+
+          // Re-armar la siguiente recepcion I2C
+          startI2C_Receive_IT();
       }
-      else if (pending_action == 3) {
-          pending_action = 0;
-          HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nOpcion Invalida\r\n", 19, 100);
-          Show_Menu();
+
+      // Si la recepcion I2C se perdio (error/timeout), re-armar
+      if (i2cReady) {
+    	  HAL_Delay(5);
+          startI2C_Receive_IT();
       }
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -390,6 +697,43 @@ static void MX_DAC_Init(void)
 }
 
 /**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+
+  // ¡AQUÍ ESTABA EL ERROR 1!
+  hi2c1.Init.OwnAddress1 = ESP32_I2C_ADDR;
+
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -403,8 +747,6 @@ static void MX_TIM1_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
-  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
 
   /* USER CODE BEGIN TIM1_Init 1 */
 
@@ -412,7 +754,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = ARR_PWM-1; // Usamos el macro ARR_PWM (100)
+  htim1.Init.Period = 100-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -425,42 +767,15 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 50;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
-  HAL_TIM_MspPostInit(&htim1);
 
 }
 
@@ -482,9 +797,9 @@ static void MX_TIM6_Init(void)
 
   /* USER CODE END TIM6_Init 1 */
   htim6.Instance = TIM6;
-  htim6.Init.Prescaler = PSC_DAC;
+  htim6.Init.Prescaler = 1-1;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 100-1;
+  htim6.Init.Period = 1000-1;
   htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
   {
@@ -581,6 +896,44 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// =====================================================================
+// CALLBACK: UART RX completo
+// =====================================================================
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2)
+    {
+        flagChange = 1;
+        HAL_UART_Receive_IT(&huart2, &receivedRX, 1);
+    }
+}
+
+// =====================================================================
+// ¡AQUÍ ESTABA EL ERROR 2! Reemplazado por HAL_I2C_SlaveRxCpltCallback
+// =====================================================================
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        if (i2cRxBuf != 0x00 && i2cRxBuf != 0xFF) {
+            flagI2C = 1;
+        } else {
+            i2cReady = 1;
+        }
+    }
+}
+
+// =====================================================================
+// CALLBACK: I2C Error (NACK, bus error, etc.)
+// =====================================================================
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        i2cReady = 1;
+    }
+}
 
 /* USER CODE END 4 */
 
